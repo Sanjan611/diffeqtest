@@ -33,5 +33,12 @@ end
 
 # benchmark test to compare speeds
 dt = data.t[2] - data.t[1];
-@btime RHEOS.obj_const_nonsing($values(param_sim), 0, $model_sim._Ga, $data.t, $dt, $ϵdot, $σ) # 110.596 μs
-@btime differentialCost($σ, $σdot, $ϵ, $ϵdot, $values(param_sim)) # 5.304 μs
+vals = values(param_sim)
+
+println("Boltzmann cost function:")
+@btime RHEOS.obj_const_nonsing($vals, 0, $model_sim._Ga, $data.t, $dt, $ϵdot, $σ) # 110.596 μs
+
+println("\nDifferential Equation cost function:")
+@btime differentialCost($σ, $σdot, $ϵ, $ϵdot, $vals) # 5.304 μs
+
+println("")

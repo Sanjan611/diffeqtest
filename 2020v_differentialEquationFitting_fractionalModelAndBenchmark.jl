@@ -12,10 +12,10 @@ t = data.t
 dt = t[2] - t[1]
 σ = data.σ
 σderiv = deriv(σ, t)
-σdoublederiv = deriv(σderiv, t)
+σdoublederiv = RHEOS.doublederivCD(σderiv, t)
 ϵ = data.ϵ
 ϵderiv = deriv(ϵ, t)
-ϵdoublederiv = deriv(ϵderiv, t)
+ϵdoublederiv = RHEOS.doublederivCD(ϵderiv, t)
 
 function fractionalDiff(sigderiv, sigdoublederiv, t, dt, α)
 
@@ -37,21 +37,28 @@ function differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv
 end
 
 # original parameters = [2.0, 0.5, 0.5, 0.7]
-# p0 = [3.0, 0.2, 5.0, 1.0]
+# fitting result is drastically afftected by double derivative method used,
+# makes sense, particularly as ramp load doesn't have much instantaneous 'information'
+# as well.
+# p0 = [3.0, 0.6, 0.6, 1.0]
 # opt = Opt(:LN_SBPLX, length(p0))
 # lower_bounds!(opt, [0.0, 0.0, 0.0, 0.0])
-# upper_bounds!(opt, [Inf, 1.0, Inf, Inf])
+# upper_bounds!(opt, [100, 1.0, 100, 100])
 # xtol_rel!(opt, 1e-5)
 # min_objective!(opt, (params, grad) -> differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, data.t, dt, params))
 # (minf, minx, ret) = NLopt.optimize(opt, p0)
 # println(minx)
 
 # BENCHMARKS
-@btime differentialCost($σ, $σderiv, $σdoublederiv, $ϵ, $ϵderiv, $ϵdoublederiv, $data.t, $dt, $values(param_sim))
+vals = [i for i in values(param_sim)]
 
-testmodulus = model_sim._Ga
+testmodulus = RHEOS._Ga(FractSLS_Zener)
 dummygrad = [1.0]
-@btime RHEOS.obj_const_nonsing($values(param_sim), $dummygrad, $testmodulus, $t, $dt, $ϵderiv, $σ)
 
+# println("Boltzmann cost function:")
+@btime RHEOS.obj_const_nonsing($vals, $dummygrad, $testmodulus, $t, $dt, $ϵderiv, $σ) # 15.858 ms
 
+println("\nDifferential Equation cost function:")
+@btime differentialCost($σ, $σderiv, $σdoublederiv, $ϵ, $ϵderiv, $ϵdoublederiv, $data.t, $dt, $vals) # 240.779 μs
 
+println("")
