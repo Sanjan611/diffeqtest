@@ -1,12 +1,13 @@
 #!/usr/bin/env julia
-# using Revise; using RHEOS; using NLopt; using DSP; using SpecialFunctions; using BenchmarkTools
+# using Revise; using RHEOS; using NLopt; using BenchmarkTools; using DSP; using SpecialFunctions
 
-# fractSLS_predicted = modelpredict(data, FractionalSLS([2.0, 0.5, 0.5, 0.7]), :G)
-# cₐ, a, kᵦ, kᵧ = params
+time_sim = timeline(t_start = 0, t_end = 100, step = 0.1)
+load_sim = strainfunction(time_sim, ramp(offset = 0.0, gradient = 1.0));
+param_sim = (cₐ = 2.0, a = 0.5, kᵦ = 0.5, kᵧ = 0.7)
+model_sim = RheoModel(FractSLS_Zener, param_sim)
 
 deriv = RHEOS.derivBD
 
-data = loaddata("fractsls_predicted.jld2")
 t = data.t
 dt = t[2] - t[1]
 σ = data.σ
@@ -24,7 +25,7 @@ function fractionalDiff(sigderiv, sigdoublederiv, t, dt, α)
 
 end
 
-function differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, t, dt, params, grad)
+function differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, t, dt, params)
 
     cₐ, a, kᵦ, kᵧ = params
 
@@ -41,15 +42,16 @@ end
 # lower_bounds!(opt, [0.0, 0.0, 0.0, 0.0])
 # upper_bounds!(opt, [Inf, 1.0, Inf, Inf])
 # xtol_rel!(opt, 1e-5)
-# min_objective!(opt, (params, grad) -> differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, data.t, dt, params, grad))
+# min_objective!(opt, (params, grad) -> differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, data.t, dt, params))
 # (minf, minx, ret) = NLopt.optimize(opt, p0)
 # println(minx)
 
 # BENCHMARKS
-@btime differentialCost($σ, $σderiv, $σdoublederiv, $ϵ, $ϵderiv, $ϵdoublederiv, $data.t, $dt, $p0, 1.0)
+@btime differentialCost($σ, $σderiv, $σdoublederiv, $ϵ, $ϵderiv, $ϵdoublederiv, $data.t, $dt, $values(param_sim))
 
-testmodel = FractionalSLS()
-testmodulus = testmodel.G
-@btime RHEOS.obj_const_nonsing($p0, [1.0], $testmodulus, $t, $dt, $ϵderiv, $σ)
+testmodulus = model_sim._Ga
+dummygrad = [1.0]
+@btime RHEOS.obj_const_nonsing($values(param_sim), $dummygrad, $testmodulus, $t, $dt, $ϵderiv, $σ)
+
 
 
