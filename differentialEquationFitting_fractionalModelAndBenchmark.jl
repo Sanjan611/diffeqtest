@@ -1,5 +1,6 @@
 #!/usr/bin/env julia
-# using Revise; using RHEOS; using NLopt; using DSP; using SpecialFunctions; using BenchmarkTools
+using Revise; 
+using RHEOS; using NLopt; using DSP; using SpecialFunctions; using BenchmarkTools
 
 # fractSLS_predicted = modelpredict(data, FractionalSLS([2.0, 0.5, 0.5, 0.7]), :G)
 # cₐ, a, kᵦ, kᵧ = params

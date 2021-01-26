@@ -1,10 +1,13 @@
 #!/usr/bin/env julia
-# using Revise; using RHEOS; using NLopt; using BenchmarkTools; using DSP; using SpecialFunctions
+# using Revise;
+using RHEOS; using NLopt; using BenchmarkTools; using DSP; using SpecialFunctions
 
 time_sim = timeline(t_start = 0, t_end = 100, step = 0.1)
 load_sim = strainfunction(time_sim, ramp(offset = 0.0, gradient = 1.0));
 param_sim = (cₐ = 2.0, a = 0.5, kᵦ = 0.5, kᵧ = 0.7)
 model_sim = RheoModel(FractSLS_Zener, param_sim)
+
+data = modelpredict(load_sim, model_sim)
 
 deriv = RHEOS.derivBD
 
@@ -34,6 +37,7 @@ function differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv
 
     # print(params, "\n")
     cost =  sum(((cₐ + cₐ*kᵧ/kᵦ).*ϵfdot .+ kᵧ*ϵ .- σ .- (cₐ/kᵦ).*σfdot).^2)
+ 
 end
 
 # original parameters = [2.0, 0.5, 0.5, 0.7]
@@ -59,6 +63,7 @@ dummygrad = [1.0]
 @btime RHEOS.obj_const_nonsing($vals, $dummygrad, $testmodulus, $t, $dt, $ϵderiv, $σ) # 15.858 ms
 
 println("\nDifferential Equation cost function:")
+# differentialCost(σ, σderiv, σdoublederiv, ϵ, ϵderiv, ϵdoublederiv, data.t, dt, vals)
 @btime differentialCost($σ, $σderiv, $σdoublederiv, $ϵ, $ϵderiv, $ϵdoublederiv, $data.t, $dt, $vals) # 240.779 μs
 
 println("")
