@@ -3,12 +3,12 @@ include("caputo.jl")
 using RHEOS
 using PyPlot
 
-time_sim = timeline(t_start = 0, t_end = 100, step = 0.15);
+time_sim = timeline(t_start = 0, t_end = 100, step = 0.1);
 # load_sim = strainfunction(time_sim, ramp(offset = 0.0, gradient = 1.0));
 # load_sim = strainfunction(time_sim, hstep(offset=5.0, amp=5))
-load_sim = strainfunction(time_sim, ramp(offset=0.0, gradient=2.0))  - strainfunction(time_sim, ramp(offset=4, gradient=1.0))
+load_sim = strainfunction(time_sim, ramp(offset=0.0, gradient=2.0))  - strainfunction(time_sim, ramp(offset=20, gradient=1.0))
 # param_sim = (cₐ = 2.0, a = 0.5, kᵦ = 0.5, kᵧ = 0.7)
-param_sim = (cₐ = 2.0, a = 0.6, kᵦ = 0.4, kᵧ = 0.7)
+param_sim = (cₐ = 2.0, a = 0.5, kᵦ = 0.9, kᵧ = 0.7)
 model_sim = RheoModel(FractSLS_Zener, param_sim)
 data = modelpredict(load_sim, model_sim)
 
@@ -25,8 +25,6 @@ dt = t[2] - t[1]
 
 # myplot = plot(t, ϵ)
 # display(myplot)
-
-α = 0.7 # same as a used in param_sim
 
 function differentialCost1(σ, ϵ, t, dt, params)
 
@@ -86,7 +84,7 @@ println("Differential Equation cost 2: ", differentialCost2(σ, ϵ, t, dt, param
 @btime differentialCost2($σ, $ϵ, $t, $dt, $param_sim)
 
 println("Differential Equation cost 3: ", differentialCost3(σ, ϵ, t, dt, param_sim))
-@btime differentialCost2($σ, $ϵ, $t, $dt, $param_sim)
+@btime differentialCost3($σ, $ϵ, $t, $dt, $param_sim)
 
 
 # as = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
